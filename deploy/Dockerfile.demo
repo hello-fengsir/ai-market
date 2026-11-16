@@ -1,0 +1,9 @@
+FROM python:3.12-alpine
+ENV TZ=Asia/Shanghai PYTHONUNBUFFERED=1
+RUN apk add --no-cache tzdata wget ca-certificates && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shanghai >/etc/timezone
+WORKDIR /app
+# 把配置台应用复制进镜像（不含宿主机 ./data，运行时由卷挂载覆盖）
+COPY engine.py channels.py render.py fetcher.py scheduler.py server.py ui.html /app/
+# ./data 由卷挂载提供（任务/渠道配置、样例数据、状态、投递记录、密钥）
+EXPOSE 8080
+CMD ["python","server.py","--host","0.0.0.0","--port","8080"]

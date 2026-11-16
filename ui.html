@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>标讯多任务配置台</title>
+<style>
+  :root{--bg:#f4f6f9;--card:#fff;--line:#e3e8ef;--text:#1f2733;--muted:#6b7685;--brand:#185FA5;--brand2:#0F6E56;--danger:#A32D2D;--ok:#3B6D11;}
+  *{box-sizing:border-box;font-family:-apple-system,"Microsoft YaHei",Segoe UI,sans-serif;}
+  body{margin:0;background:var(--bg);color:var(--text);font-size:13px;}
+  header{padding:8px 16px;background:var(--card);border-bottom:1px solid var(--line);}
+  header h1{margin:0;font-size:13px;font-weight:600;}
+  header p{margin:2px 0 0;color:var(--muted);font-size:11px;}
+  h3{font-size:13px;font-weight:600;margin:8px 0 6px;}
+  .wrap{display:flex;flex-wrap:wrap;padding:12px 16px;gap:14px;}
+  .nav{display:flex;gap:6px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--card);}
+  .nav button{border:none;background:none;padding:9px 11px;cursor:pointer;color:var(--muted);font-size:13px;border-bottom:2px solid transparent;}
+  .nav button.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600;}
+  .panel{display:none;width:100%;}
+  .panel.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:11px;}
+  label{display:block;color:var(--muted);font-size:11px;margin:9px 0 3px;}
+  input,select,textarea{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;background:#fff;color:var(--text);}
+  textarea{font-family:Consolas,Menlo,monospace;min-height:110px;resize:vertical;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .row>*{flex:1;min-width:150px;}
+  button.act{background:var(--brand);color:#fff;border:none;border-radius:7px;padding:7px 13px;cursor:pointer;font-size:12px;}
+  button.act.green{background:var(--brand2);}
+  button.act.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand);}
+  button.act.danger{background:var(--danger);}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{color:var(--muted);font-weight:600;}
+  .pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;background:#eef2f7;color:var(--muted);}
+  .pill.dingtalk{background:#e6f1fb;color:#0c447c;}
+  .pill.wecom{background:#e1f5ee;color:#085041;}
+  .pill.feishu{background:#fbeaf0;color:#72243e;}
+  .pill.custom{background:#f1efe8;color:#444441;}
+  .ok{color:var(--ok);} .bad{color:var(--danger);}
+  .mut{color:var(--muted);font-size:11px;}
+  .tag{display:inline-block;margin:1px 3px 1px 0;padding:1px 7px;border:1px solid var(--line);border-radius:6px;font-size:11px;cursor:pointer;}
+  .tag.on{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .small{font-size:11px;color:var(--muted);}
+  pre{background:#0c1422;color:#d6e2f0;padding:9px;border-radius:8px;overflow:auto;max-height:300px;white-space:pre-wrap;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+  /* 规则表单 */
+  .rulebox{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:#fafbfc;}
+  .rulebox h4{margin:0 0 5px;font-size:11px;color:var(--brand);}
+  .rulebox .desc{margin:0 0 7px;color:var(--muted);font-size:11px;}
+  .chips{border:1px solid var(--line);border-radius:8px;padding:5px;min-height:34px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:#fff;}
+  .chips input{border:none;outline:none;flex:1;min-width:120px;padding:3px;}
+  .chip{display:inline-flex;align-items:center;background:var(--brand);color:#fff;border-radius:6px;padding:1px 3px 1px 7px;font-size:11px;}
+  .chip.x{background:#fff;color:var(--danger);border:1px solid var(--danger);}
+  .chip span.x{cursor:pointer;margin-left:6px;font-weight:700;}
+  .chip.exc{background:var(--danger);}
+  .checks{display:flex;flex-wrap:wrap;gap:5px 14px;}
+  .checks label{display:inline-flex;align-items:center;gap:5px;color:var(--text);font-size:12px;cursor:pointer;margin:2px 0;}
+  .checks input{width:auto;margin:0;}
+  .chkline{display:flex;align-items:center;gap:6px;color:var(--text);font-size:12px;cursor:pointer;margin:8px 0;}
+  .chkline input{width:auto;margin:0;}
+  details.adv{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:7px 11px;background:#fff;}
+  details.adv summary{cursor:pointer;color:var(--muted);font-size:12px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>标讯多任务配置台</h1>
+  <p>设置过滤规则（勾选 + 自定义关键词）· 建立多任务 · 每个任务推送到不同 Webhook（钉钉 / 企微 / 飞书 / 自定义）· 先预览再手动推送</p>
+</header>
+<div class="nav">
+  <button data-tab="tasks" class="active">任务与规则</button>
+  <button data-tab="channels">渠道（Webhook）</button>
+  <button data-tab="run">预览与推送</button>
+  <button data-tab="log">投递记录</button>
+</div>
+<div class="wrap">
+  <div class="panel active" id="tab-tasks">
+    <div class="card">
+      <div class="row">
+        <select id="taskSelect"></select>
+        <div style="flex:0"><button class="act ghost" id="newTask">+ 新建任务</button></div>
+      </div>
+      <label>任务名称</label><input id="tName" />
+      <label>数据源</label><input id="tSource" value="shanghai_tender" />
+      <label>绑定渠道（可多选）</label>
+      <div id="tChannels" class="row" style="gap:6px"></div>
+      <label>单任务上限</label><input id="tLimit" type="number" value="8" />
+
+      <div class="rulebox">
+        <h4>定时推送设置</h4>
+        <label class="chkline"><input type="checkbox" id="tAuto" /> 启用此任务的定时推送</label>
+        <div class="row" id="scheduleFields">
+          <div><label>执行周期</label><select id="tFreq"><option value="weekdays">工作日（周一至周五）</option><option value="daily">每天</option><option value="custom">自定义 Cron</option></select></div>
+          <div><label>执行时间</label><input id="tTime" type="time" value="09:00" /></div>
+          <div id="cronWrap" style="display:none"><label>Cron 表达式</label><input id="tSchedule" value="0 9 * * 1-5" placeholder="例如 0 9 * * 1-5" /></div>
+        </div>
+        <p class="desc">保存任务后，还需要在“预览与推送”页开启全局自动推送开关。关闭本项不会影响手动预览和推送。</p>
+      </div>
+
+      <div class="rulebox">
+        <h4>① 包含条件（同时满足才命中）</h4>
+        <p class="desc">下面几项之间是“并且”的关系：一条公告要同时过地区、关键词、状态、预算、时间这几关，才会被推送。</p>
+        <label>地区（不选 = 不限地区）</label>
+        <div id="fRegions" class="checks"></div>
+        <label>命中关键词（标题或摘要含其中任一即算命中，可自由添加）</label>
+        <div id="fHit" class="chips"></div>
+        <label>公告状态（不选 = 不限）</label>
+        <div id="fStatus" class="checks"></div>
+        <label>采购人命中关键词（采购人含这些词即命中，例如 大学 / 医院 / 研究院）</label>
+        <div id="fPurchHit" class="chips"></div>
+        <div class="row">
+          <div><label>最低预算（万元，0 = 不限）</label><input id="fBudget" type="number" value="0" /></div>
+          <div><label>只看近 N 天发标（0 = 不限）</label><input id="fRecent" type="number" value="0" /></div>
+        </div>
+        <label class="chkline"><input type="checkbox" id="fNoExpired" /> 排除已截止（过期）的公告</label>
+        <label class="chkline"><input type="checkbox" id="fNoFileEnd" /> 排除标书获取已截止的公告</label>
+      </div>
+
+      <div class="rulebox">
+        <h4>② 排除条件（命中任一就淘汰）</h4>
+        <p class="desc">下面这些词只要出现在标题或采购人里，就整条丢弃——用来挡掉不想要的噪音。</p>
+        <label>标题排除关键词（标题含这些词就淘汰）</label>
+        <div id="fExc" class="chips"></div>
+        <label>采购人黑名单（采购人含这些词就淘汰，例如 公安局 / 人民政府 / 医院）</label>
+        <div id="fPurch" class="chips"></div>
+      </div>
+
+      <details class="adv">
+        <summary>高级：直接编辑规则 JSON（不懂可忽略）</summary>
+        <label class="chkline"><input type="checkbox" id="useRaw" /> 以原始 JSON 为准（勾选后保存用下面文本框内容）</label>
+        <textarea id="tRuleRaw"></textarea>
+      </details>
+
+      <div class="row" style="margin-top:10px">
+        <div style="flex:0"><button class="act" id="saveTask">保存任务</button></div>
+        <div style="flex:0"><button class="act danger" id="delTask">删除任务</button></div>
+        <div class="mut" style="flex:2" id="taskHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-channels">
+    <div class="card">
+      <div class="row">
+        <select id="chSelect"></select>
+        <div style="flex:0"><button class="act ghost" id="newCh">+ 新建渠道</button></div>
+      </div>
+      <label>渠道 ID</label><input id="cId" />
+      <label>名称</label><input id="cName" />
+      <label>类型</label>
+      <select id="cType">
+        <option value="dingtalk">钉钉</option>
+        <option value="wecom">企业微信</option>
+        <option value="feishu">飞书</option>
+        <option value="custom">自定义 HTTP</option>
+      </select>
+      <label>Webhook 地址</label><input id="cUrl" />
+      <label>密钥引用（secret_ref，例如 sec:dingtalk_sales；密钥本身不回显）</label><input id="cRef" />
+      <label>密钥值（仅本地保存，留空则不修改）</label><input id="cSecret" type="password" placeholder="输入后保存即写入本地 secrets.json" />
+      <div class="row" style="margin-top:10px">
+        <div style="flex:0"><button class="act" id="saveCh">保存渠道</button></div>
+        <div style="flex:0"><button class="act green" id="testCh">发送测试消息</button></div>
+        <div style="flex:0"><button class="act danger" id="delCh">删除渠道</button></div>
+        <div class="mut" style="flex:2" id="chHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-run">
+    <div class="card">
+      <div class="row">
+        <div style="flex:2"><label>选择任务</label><select id="runTask"></select></div>
+        <div style="flex:0"><label>&nbsp;</label><button class="act" id="btnPreview">预览（不发送）</button></div>
+      </div>
+      <div class="mut">预览按规则筛选，展示命中项与淘汰原因；勾选后点“推送选中”才真正发送到该任务绑定的渠道。</div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <div style="flex:0"><button class="act green" id="btnPush">推送选中</button></div>
+        <div class="mut" style="flex:2" id="runHint"></div>
+      </div>
+      <div id="previewBox"></div>
+    </div>
+    <div class="card">
+      <h4>自动定时推送（可选，默认关闭）</h4>
+      <div class="mut">开启后，系统按每个任务里的 schedule（cron，如 0 9 * * 1-5）自动扫描并推送“新命中项”；你仍可随时手动预览/推送。注意：当前离线样例模式下命中项有限，接好真实采集后才会持续出新。</div>
+      <div class="row">
+        <div style="flex:0"><button class="act ghost" id="btnSched">开启自动推送</button></div>
+        <div class="mut" style="flex:2" id="schedHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-log">
+    <div class="card"><div id="logBox"></div></div>
+  </div>
+</div>
+
+<script>
+const api = async (m,u,b)=>{
+  const o={method:m,headers:{'Content-Type':'application/json'}};
+  if(b)o.body=JSON.stringify(b);
+  let r;
+  try{ r=await fetch(u,o); }
+  catch(e){ alert('网络请求失败：'+e.message); throw e; }
+  if(r.status===401){ alert('登录状态已失效，请刷新页面重新输入账号密码'); throw new Error('unauthorized'); }
+  let j;
+  try{ j=await r.json(); }
+  catch(e){ j={error:'响应不是合法 JSON（HTTP '+r.status+'）'}; }
+  return j;
+};
+/* 时间显示：ISO -> 本地可读 */
+function fmtTime(s){
+  if(!s)return '';
+  const d=new Date(s); if(isNaN(d))return String(s);
+  const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+/* HTML 转义：标题/采购人可能含引号或尖括号，直接拼接会破坏结构 */
+function esc(v){
+  return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+let CFG={tasks:[],channels:[],facets:{regions:[],statuses:[]}};
+
+/* ===== 通用组件：自定义关键词标签 ===== */
+function makeChips(containerId){
+  const box=document.getElementById(containerId);
+  const input=document.createElement('input');
+  input.placeholder='输入关键词后回车或逗号添加，可多个';
+  box.appendChild(input);
+  const add=(v)=>{v=String(v||'').trim();if(!v)return;
+    const c=document.createElement('span');c.className='chip';
+    c.appendChild(document.createTextNode(v));
+    const x=document.createElement('span');x.className='x';x.textContent='×';x.onclick=()=>c.remove();
+    c.appendChild(x);box.insertBefore(c,input);};
+  (input.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===','){e.preventDefault();add(input.value);input.value='';}}));
+  input.addEventListener('blur',()=>{if(input.value.trim()){add(input.value);input.value='';}});
+  return {
+    get:()=>[...box.querySelectorAll('.chip')].map(c=>c.firstChild.textContent),
+    set:(arr)=>{box.querySelectorAll('.chip').forEach(c=>c.remove());(arr||[]).forEach(add);}
+  };
+}
+/* ===== 通用组件：多选勾选 ===== */
+function makeChecks(containerId, options){
+  const box=document.getElementById(containerId);
+  const api={
+    get:()=>[...box.querySelectorAll('input:checked')].map(c=>c.value),
+    set:(arr)=>{const s=new Set(arr||[]);box.querySelectorAll('input').forEach(c=>c.checked=s.has(c.value));},
+    options:(opts)=>{
+      const selected=new Set(api.get());box.innerHTML='';
+      (opts||[]).forEach(o=>{const l=document.createElement('label');
+        const c=document.createElement('input');c.type='checkbox';c.value=o;c.checked=selected.has(o);
+        l.appendChild(c);l.appendChild(document.createTextNode(' '+o));box.appendChild(l);});
+    }
+  };
+  api.options(options);
+  return api;
+}
+const hitChips=makeChips('fHit'), excChips=makeChips('fExc'), purchChips=makeChips('fPurch'), purchHitChips=makeChips('fPurchHit');
+let regionChecks=null, statusChecks=null;
+
+/* ===== 表单 <-> 规则 JSON 互相转换 ===== */
+function buildRule(){
+  const include=[], exclude=[];
+  const regions=regionChecks.get(); if(regions.length) include.push({field:'region',op:'in',value:regions});
+  const kw=hitChips.get(); if(kw.length) include.push({field:'text',op:'contains_any',value:kw});
+  const stats=statusChecks.get(); if(stats.length) include.push({field:'status',op:'in',value:stats});
+  const ph=purchHitChips.get(); if(ph.length) include.push({field:'purchaser',op:'contains_any',value:ph});
+  const budget=parseFloat(document.getElementById('fBudget').value)||0;
+  if(budget>0) include.push({field:'budget_num',op:'gte',value:Math.round(budget*10000)});
+  if(document.getElementById('fNoExpired').checked) include.push({field:'deadline_dt',op:'window',value:{from:'now'}});
+  if(document.getElementById('fNoFileEnd').checked) include.push({field:'file_end_dt',op:'window',value:{from:'now'}});
+  const recent=parseInt(document.getElementById('fRecent').value)||0;
+  if(recent>0){const from=new Date(Date.now()-recent*86400000).toISOString();include.push({field:'published_dt',op:'window',value:{from,to:'now'}});}
+  const excKw=excChips.get(); if(excKw.length) exclude.push({field:'title',op:'contains_any',value:excKw});
+  const blk=purchChips.get(); if(blk.length) exclude.push({field:'purchaser',op:'contains_any',value:blk});
+  return {include,exclude};
+}
+function fillRuleForm(rule){
+  rule=rule||{include:[],exclude:[]};
+  const inc=rule.include||[], exc=rule.exclude||[];
+  const find=(arr,f,o)=>(arr.find(c=>c.field===f&&c.op===o)||{}).value;
+  regionChecks.set(find(inc,'region','in')||[]);
+  hitChips.set((find(inc,'text','contains_any')||find(inc,'title','contains_any'))||[]);
+  statusChecks.set(find(inc,'status','in')||[]);
+  purchHitChips.set(find(inc,'purchaser','contains_any')||[]);
+  const bg=(inc.find(c=>c.field==='budget_num'&&c.op==='gte')||{}).value;
+  document.getElementById('fBudget').value=bg?Math.round(bg/10000):0;
+  document.getElementById('fNoExpired').checked=!!inc.find(c=>c.field==='deadline_dt'&&c.op==='window'&&(c.value||{}).from==='now');
+  document.getElementById('fNoFileEnd').checked=!!inc.find(c=>c.field==='file_end_dt'&&c.op==='window'&&(c.value||{}).from==='now');
+  const pw=(inc.find(c=>c.field==='published_dt'&&c.op==='window')||{}).value;
+  if(pw&&pw.from&&pw.from!=='now'){const d=Math.round((Date.now()-new Date(pw.from).getTime())/86400000);document.getElementById('fRecent').value=d>0?d:0;}
+  else document.getElementById('fRecent').value=0;
+  excChips.set((exc.find(c=>c.field==='title'&&c.op==='contains_any')||{}).value||[]);
+  purchChips.set((exc.find(c=>c.field==='purchaser'&&c.op==='contains_any')||{}).value||[]);
+  document.getElementById('tRuleRaw').value=JSON.stringify(rule,null,2);
+}
+
+/* ===== 定时设置 ===== */
+function scheduleFromForm(){
+  if(!document.getElementById('tAuto').checked)return '';
+  const freq=document.getElementById('tFreq').value;
+  if(freq==='custom')return document.getElementById('tSchedule').value.trim();
+  const parts=(document.getElementById('tTime').value||'09:00').split(':');
+  const minute=parseInt(parts[1]||'0',10),hour=parseInt(parts[0]||'9',10);
+  return minute+' '+hour+' * * '+(freq==='weekdays'?'1-5':'*');
+}
+function fillScheduleForm(task){
+  const expr=(task.schedule||'').trim();
+  const enabled=task.auto_enabled===undefined?!!expr:!!task.auto_enabled;
+  document.getElementById('tAuto').checked=enabled;
+  let freq='custom',time='09:00';
+  let m=expr.match(/^(\d+)\s+(\d+)\s+\*\s+\*\s+(1-5|\*)$/);
+  if(m){freq=m[3]==='1-5'?'weekdays':'daily';time=String(m[2]).padStart(2,'0')+':'+String(m[1]).padStart(2,'0');}
+  document.getElementById('tFreq').value=freq;
+  document.getElementById('tTime').value=time;
+  document.getElementById('tSchedule').value=expr||'0 9 * * 1-5';
+  updateScheduleUi();
+}
+function updateScheduleUi(){
+  const enabled=document.getElementById('tAuto').checked;
+  document.getElementById('scheduleFields').style.opacity=enabled?'1':'.45';
+  document.querySelectorAll('#scheduleFields input,#scheduleFields select').forEach(e=>e.disabled=!enabled);
+  document.getElementById('cronWrap').style.display=document.getElementById('tFreq').value==='custom'?'block':'none';
+}
+document.getElementById('tAuto').onchange=updateScheduleUi;
+document.getElementById('tFreq').onchange=updateScheduleUi;
+
+/* ===== 数据加载 ===== */
+const load=async(preferTask,preferCh)=>{
+  CFG=await api('GET','/api/config');
+  if(!regionChecks) regionChecks=makeChecks('fRegions',CFG.facets.regions||[]);
+  else regionChecks.options(CFG.facets.regions||[]);
+  if(!statusChecks) statusChecks=makeChecks('fStatus',CFG.facets.statuses||[]);
+  else statusChecks.options(CFG.facets.statuses||[]);
+  fillTasks(preferTask);fillChannels(preferCh);fillRun();refreshSched(CFG.scheduler);
+};
+const fillTasks=prefer=>{
+  const s=document.getElementById('taskSelect'); const cur=prefer||s.value;
+  s.innerHTML='';
+  CFG.tasks.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;s.appendChild(o);});
+  // 保存后保持停留在原任务，避免用户改完 A 却被弹回第一个任务
+  const target=CFG.tasks.some(t=>t.id===cur)?cur:(CFG.tasks[0]?CFG.tasks[0].id:null);
+  if(target){s.value=target;selectTask(target);}
+  else{document.getElementById('taskHint').textContent='暂无任务，点击「+ 新建任务」开始配置';}
+};
+const selectTask=id=>{
+  const t=CFG.tasks.find(x=>x.id===id); if(!t)return;
+  document.getElementById('tName').value=t.name;
+  document.getElementById('tSource').value=t.source||'shanghai_tender';
+  document.getElementById('tLimit').value=t.limit||8;
+  fillScheduleForm(t);
+  fillRuleForm(t.rule);
+  const box=document.getElementById('tChannels'); box.innerHTML='';
+  CFG.channels.forEach(c=>{
+    const el=document.createElement('label');el.className='tag'+((t.channel_ids||[]).includes(c.id)?' on':'');
+    const ck=document.createElement('input');ck.type='checkbox';ck.checked=(t.channel_ids||[]).includes(c.id);ck.style.width='auto';ck.style.margin='0 5px 0 0';
+    el.appendChild(ck);el.appendChild(document.createTextNode(c.name+' ('+c.channel+')'));el.dataset.id=c.id;
+    el.onclick=e=>{if(e.target!==ck)ck.checked=!ck.checked;el.classList.toggle('on',ck.checked);};
+    ck.onclick=()=>el.classList.toggle('on',ck.checked);box.appendChild(el);
+  });
+  document.getElementById('taskHint').textContent='ID: '+t.id;
+};
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='log')renderLog();
+});
+document.getElementById('taskSelect').onchange=e=>selectTask(e.target.value);
+document.getElementById('newTask').onclick=()=>{
+  document.getElementById('tName').value='新任务';
+  document.getElementById('tSource').value='shanghai_tender';
+  document.getElementById('tLimit').value=8;
+  fillScheduleForm({schedule:'0 9 * * 1-5',auto_enabled:false});
+  fillRuleForm({include:[],exclude:[]});
+  document.getElementById('useRaw').checked=false;
+  [...document.querySelectorAll('#tChannels .tag')].forEach(el=>{el.classList.remove('on');const ck=el.querySelector('input');if(ck)ck.checked=false;});
+  document.getElementById('taskHint').textContent='新建，保存时自动生成 ID';
+};
+document.getElementById('useRaw').onchange=e=>{
+  if(e.target.checked){document.getElementById('tRuleRaw').value=JSON.stringify(buildRule(),null,2);}
+  else{fillRuleForm(JSON.parse(document.getElementById('tRuleRaw').value||'{}'));}
+};
+document.getElementById('saveTask').onclick=async()=>{
+  let rule;
+  if(document.getElementById('useRaw').checked){
+    try{ rule=JSON.parse(document.getElementById('tRuleRaw').value); }
+    catch(e){ alert('规则 JSON 格式错误：'+e.message); return; }
+  }else{
+    rule=buildRule();
+    document.getElementById('tRuleRaw').value=JSON.stringify(rule,null,2);
+  }
+  const channels=[...document.querySelectorAll('#tChannels .tag')].filter(e=>e.querySelector('input')?.checked).map(e=>e.dataset.id);
+  const schedule=scheduleFromForm();
+  if(document.getElementById('tAuto').checked&&!schedule){alert('请输入有效的定时表达式');return;}
+  if(!channels.length&&!confirm('该任务还没有绑定任何推送渠道，保存后将无法推送。仍要保存吗？'))return;
+  const existed=CFG.tasks.find(t=>t.id===document.getElementById('taskSelect').value);
+  const body={id:existed?existed.id:'',name:document.getElementById('tName').value,
+    source:document.getElementById('tSource').value,limit:+document.getElementById('tLimit').value,
+    enabled:existed?existed.enabled!==false:true,auto_enabled:document.getElementById('tAuto').checked,
+    schedule,channel_ids:channels,rule,dedupe:'per_task',mode:'manual',template:'tender_md'};
+  const r=await api('POST','/api/tasks',body);
+  if(r.error){document.getElementById('taskHint').textContent='保存失败：'+r.error;return;}
+  await load(r.task.id);
+  document.getElementById('taskHint').textContent='已保存'+(r.task.auto_enabled?'（定时 '+r.task.schedule+'）':'');
+};
+document.getElementById('delTask').onclick=async()=>{
+  const id=document.getElementById('taskSelect').value; if(!id)return;
+  const t=CFG.tasks.find(x=>x.id===id);
+  if(!confirm('确定删除任务「'+(t?t.name:id)+'」？规则与去重记录都会一并清除，不可恢复。'))return;
+  const r=await api('DELETE','/api/tasks?id='+encodeURIComponent(id));
+  if(r.error){alert('删除失败：'+r.error);return;}
+  await load();
+  document.getElementById('taskHint').textContent='已删除';
+};
+
+const fillChannels=prefer=>{
+  const s=document.getElementById('chSelect'); const cur=prefer||s.value;
+  s.innerHTML='';
+  CFG.channels.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name+' ('+c.channel+')';s.appendChild(o);});
+  const target=CFG.channels.some(c=>c.id===cur)?cur:(CFG.channels[0]?CFG.channels[0].id:null);
+  if(target){s.value=target;selectCh(target);}
+  else{document.getElementById('chHint').textContent='暂无渠道，点击「+ 新建渠道」开始配置';}
+};
+const selectCh=id=>{const c=CFG.channels.find(x=>x.id===id);if(!c)return;
+  document.getElementById('cId').value=c.id;document.getElementById('cName').value=c.name;
+  document.getElementById('cType').value=c.channel;document.getElementById('cUrl').value=c.webhook;
+  document.getElementById('cRef').value=c.secret_ref||'';document.getElementById('cSecret').value='';
+  const bits=['已配置密钥: '+(c.has_secret?'是':'否')];
+  // 提示明显的占位地址，避免以为配好了其实发不出去
+  if(!c.webhook||/REPLACE_|example\.invalid/i.test(c.webhook))bits.push('⚠ 该地址是占位值，需替换为真实 webhook');
+  document.getElementById('chHint').textContent=bits.join('　');
+};
+document.getElementById('chSelect').onchange=e=>selectCh(e.target.value);
+document.getElementById('newCh').onclick=()=>{['cId','cName','cUrl','cRef','cSecret'].forEach(i=>document.getElementById(i).value='');document.getElementById('cType').value='dingtalk';document.getElementById('chHint').textContent='新建渠道（ID 留空将自动生成）';};
+document.getElementById('saveCh').onclick=async()=>{
+  const url=document.getElementById('cUrl').value.trim();
+  if(!/^https?:\/\//i.test(url)){document.getElementById('chHint').textContent='Webhook 必须是 http:// 或 https:// 开头';return;}
+  const ref=document.getElementById('cRef').value||('sec:'+document.getElementById('cId').value);
+  const body={id:document.getElementById('cId').value,name:document.getElementById('cName').value,
+    channel:document.getElementById('cType').value,webhook:url,secret_ref:ref};
+  const sec=document.getElementById('cSecret').value;
+  if(sec)body.secret=sec;
+  const r=await api('POST','/api/channels',body);
+  if(r.error){document.getElementById('chHint').textContent='保存失败：'+r.error;return;}
+  await load(undefined,r.channel.id);
+  document.getElementById('chHint').textContent='已保存';
+};
+document.getElementById('testCh').onclick=async()=>{
+  const id=document.getElementById('chSelect').value;
+  if(!id){document.getElementById('chHint').textContent='请先选择渠道';return;}
+  document.getElementById('chHint').textContent='正在发送测试消息…';
+  const r=await api('POST','/api/channels/test',{id});
+  if(r.ok)document.getElementById('chHint').textContent='测试消息已发送成功，请到对应群查看';
+  else document.getElementById('chHint').textContent='发送失败：'+((r.result&&r.result.error)||r.error||'未知错误');
+};
+document.getElementById('delCh').onclick=async()=>{
+  const id=document.getElementById('chSelect').value; if(!id)return;
+  const c=CFG.channels.find(x=>x.id===id);
+  if(!confirm('确定删除渠道「'+(c?c.name:id)+'」？该操作不可撤销。'))return;
+  let r=await api('DELETE','/api/channels?id='+encodeURIComponent(id));
+  if(r.error){
+    if(confirm(r.error+'\n\n是否强制解除绑定并删除该渠道？')){r=await api('DELETE','/api/channels?id='+encodeURIComponent(id)+'&force=1');}
+    else{document.getElementById('chHint').textContent=r.error;return;}
+  }
+  await load();
+  document.getElementById('chHint').textContent='已删除';
+};
+
+const fillRun=()=>{const s=document.getElementById('runTask');const cur=s.value;s.innerHTML='';
+  CFG.tasks.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;s.appendChild(o);});
+  if(CFG.tasks.some(t=>t.id===cur))s.value=cur;};
+const refreshSched=async(st)=>{
+  try{
+    const s=st||await api('GET','/api/scheduler');
+    const active=s.active_tasks||[];
+    let msg='当前状态：'+(s.running?'已开启':'已关闭')+'；已启用定时任务 '+active.length+' 个';
+    if(s.running&&s.last_check)msg+='；最近扫描：'+fmtTime(s.last_check);
+    const lr=s.last_run||{}; const keys=Object.keys(lr);
+    if(keys.length){
+      const k=keys.sort((a,b)=>String(lr[b]).localeCompare(String(lr[a])))[0];
+      msg+='；最近触发：'+fmtTime(lr[k]);
+      const r=(s.last_result||{})[k]||{};
+      const labels={no_new_items:'无新标讯',pushed:'推送成功',push_failed:'推送失败',no_channels:'未绑定渠道',error:'执行异常'};
+      if(r.status)msg+='（'+(labels[r.status]||r.status)+(r.pushed?' '+r.pushed+' 条':'')+'）';
+    }else if(s.running){msg+='；尚未到任何任务的执行时间';}
+    if(active.length)msg+='；'+active.map(x=>x.name+' '+x.schedule).join('，');
+    document.getElementById('schedHint').textContent=msg;
+    document.getElementById('btnSched').textContent=s.running?'关闭自动推送':'开启自动推送';
+  }catch(e){}
+};
+document.getElementById('btnSched').onclick=async()=>{
+  const s=await api('GET','/api/scheduler');
+  const r=await api('POST','/api/scheduler',{action:s.running?'off':'on'});
+  if(r.error){alert('操作失败：'+r.error);return;}
+  await refreshSched(r);
+};
+
+document.getElementById('btnPreview').onclick=async()=>{
+  const tid=document.getElementById('runTask').value;
+  if(!tid){document.getElementById('runHint').textContent='请先创建任务';return;}
+  document.getElementById('runHint').textContent='正在按规则筛选…';
+  const r=await api('POST','/api/preview',{task_id:tid});
+  if(r.error){document.getElementById('runHint').textContent='预览失败：'+r.error;return;}
+  document.getElementById('runHint').textContent='';
+  let html='<h3>命中 '+r.matched.length+' 项（新 '+r.new_count+' 项 / 已推送 '+r.sent_count+' 项）</h3>';
+  if(r.matched_total>r.matched.length){html+='<div class="mut">规则共命中 '+r.matched_total+' 项，按任务上限只展示前 '+r.matched.length+' 项（可在任务里调整 limit）。</div>';}
+  html+='<table><tr><th style="width:34px"><input type=checkbox id=ckAll title="全选/取消全选"></th><th>标题</th><th>采购人</th><th>预算</th><th>截止</th><th>地区</th><th>状态</th><th>联系方式(采购人)</th></tr>';
+  r.matched.forEach(m=>{
+    const pc=(m.purchaser_contact||'');const pcShow=(pc&&pc!=='公告未披露')?esc(pc):'<span style="color:#999">未披露</span>';
+    const flag=m.is_new?'<span class="pill" style="background:#e6f1fb;color:#0c447c">新</span>':'<span class="pill">已推</span>';
+    html+='<tr><td><input type=checkbox class=ck data-id="'+esc(m.id)+'" '+(m.is_new?'checked':'')+'></td>'
+      +'<td>'+flag+' '+esc(m.title)+'</td><td>'+esc(m.purchaser)+'</td><td>'+esc(m.budget)+'</td>'
+      +'<td>'+esc(m.deadline)+'</td><td>'+esc(m.region)+'</td><td>'+esc(m.status)+'</td><td>'+pcShow+'</td></tr>';
+  });
+  html+='</table>';
+  const disclosed=r.matched.filter(m=>{const pc=(m.purchaser_contact||'');const ac=(m.agent_contact||'');return (pc&&pc!=='公告未披露')||(ac&&ac!=='公告未披露');});
+  html+='<div style="margin-top:12px;padding:10px 12px;border:1px solid #e3e8f0;border-radius:8px;background:#fafbfc;"><h4 style="margin:0 0 6px">联系方式汇总</h4>';
+  html+='<p style="margin:0 0 6px">本批命中 <b>'+r.matched.length+'</b> 项，其中 <b>'+disclosed.length+'</b> 项披露了联系方式。</p>';
+  if(disclosed.length){html+='<ul style="margin:0;padding-left:18px">';
+    disclosed.forEach(m=>{const bits=[];const pc=(m.purchaser_contact||'');const ac=(m.agent_contact||'');
+      if(pc&&pc!=='公告未披露')bits.push('采购人：'+esc(pc));if(ac&&ac!=='公告未披露')bits.push('代理：'+esc(ac));
+      html+='<li><b>'+esc(m.purchaser)+'</b>（'+esc((m.title||'').slice(0,18))+'…）：'+bits.join('；')+'</li>';});
+    html+='</ul>';}
+  else{html+='<p style="margin:0;color:#999">暂无披露的联系方式。</p>';}
+  html+='</div>';
+  if(r.excluded.length){html+='<h3>淘汰 '+r.excluded.length+' 项</h3><table><tr><th>标题</th><th>采购人</th><th>原因</th></tr>';
+    r.excluded.forEach(e=>{html+='<tr><td>'+esc(e.title)+'</td><td>'+esc(e.purchaser)+'</td><td>'+esc((e.reasons||[]).join('；'))+'</td></tr>';});html+='</table>';}
+  if(!r.channel_ids.length){html='<div class="mut" style="color:#A32D2D">该任务还没有绑定推送渠道，无法推送。请到「任务与规则」里勾选渠道。</div>'+html;}
+  document.getElementById('previewBox').innerHTML=html;
+  const all=document.getElementById('ckAll');
+  if(all)all.onchange=()=>{document.querySelectorAll('.ck').forEach(c=>c.checked=all.checked);};
+};
+document.getElementById('btnPush').onclick=async()=>{
+  const tid=document.getElementById('runTask').value;
+  const ids=[...document.querySelectorAll('.ck:checked')].map(e=>e.dataset.id);
+  if(!ids.length){document.getElementById('runHint').textContent='请先预览并勾选要推送的标讯';return;}
+  if(!confirm('确认把选中的 '+ids.length+' 条推送到该任务绑定的所有渠道？'))return;
+  document.getElementById('runHint').textContent='正在推送…';
+  const r=await api('POST','/api/push',{task_id:tid,ids});
+  if(!r.results){document.getElementById('runHint').textContent='推送失败：'+(r.error||'未知错误');return;}
+  const lines=r.results.map(x=>{
+    const nm=esc(x.name||x.channel_id||x.channel||'');
+    return x.ok?('✅ '+nm+' 成功'):('❌ '+nm+' 失败：'+esc(x.error||'未知错误'));
+  });
+  document.getElementById('runHint').innerHTML=(r.ok?'<span class=ok>推送成功</span>':'<span class=bad>部分渠道失败</span>')
+    +'　共 '+r.selected+' 条<br>'+lines.join('<br>');
+  // 推送成功后自动刷新预览，让「新/已推」标记与最新状态一致
+  if(r.ok)await document.getElementById('btnPreview').onclick();
+};
+const renderLog=async()=>{
+  const log=await api('GET','/api/outbox');
+  if(!Array.isArray(log)){document.getElementById('logBox').innerHTML='<div class="mut">投递记录读取失败</div>';return;}
+  if(!log.length){document.getElementById('logBox').innerHTML='<div class="mut">暂无投递记录</div>';return;}
+  let html='<table><tr><th>时间</th><th>任务</th><th>条数</th><th>结果</th><th>渠道明细</th></tr>';
+  log.slice().reverse().forEach(e=>{
+    const rs=(e.results||[]).map(x=>{
+      const nm=esc(x.name||x.channel_id||x.channel||'');
+      return x.ok?('<span class=ok>'+nm+' OK</span>'):('<span class=bad>'+nm+'：'+esc(x.error||'失败')+'</span>');
+    }).join('<br>')||'<span class=mut>无渠道结果</span>';
+    const flag=e.ok?'<span class=ok>成功</span>':'<span class=bad>失败</span>';
+    html+='<tr><td>'+esc(fmtTime(e.at))+'</td><td>'+esc(e.task_name)+'</td><td>'+((e.item_ids||[]).length)+'</td><td>'+flag+'</td><td>'+rs+'</td></tr>';
+  });
+  html+='</table>';
+  document.getElementById('logBox').innerHTML=html;
+};
+load();
+</script>
+</body>
+</html>

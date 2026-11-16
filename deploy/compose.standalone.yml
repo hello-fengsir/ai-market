@@ -1,0 +1,43 @@
+# 标讯配置台 —— 独立部署编排（不依赖任何现有栈）
+#
+# 用法（在本文件所在目录的上一级，即包含 server.py 的目录执行）：
+#   docker compose -f deploy/compose.standalone.yml up -d --build
+#
+# 或使用离线镜像（无网络/无构建环境时）：
+#   docker load -i image/ai-market-demo-1.0.tar.gz
+#   docker compose -f deploy/compose.standalone.yml up -d      # image 已存在则不会重新构建
+#
+# 端口冲突时改左边： "18080:8080"
+
+services:
+  ai-market-demo:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.demo
+    image: ai-market-demo:1.0
+    container_name: ai-market-demo
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: Asia/Shanghai
+      AUTO_UPDATE: "1"
+      UPDATE_SCHEDULE: "30 8 * * *"
+      LIVE_MODULE_PATH: "/app/collectors/shanghai_tender_push.py"
+      # 可选大模型接口预留；每日更新不依赖大模型。
+      LLM_ENABLED: "0"
+      LLM_BASE_URL: ""
+      LLM_API_KEY: ""
+      LLM_MODEL: ""
+    volumes:
+      # 全部可变内容都在这里：任务/渠道/密钥/登录密码/去重状态/投递记录
+      - ../data:/app/data
+      # 按实际宿主机路径修改；采集脚本必须提供 TERMS/search/detail/ident。
+      - /opt/collectors/shanghai_tender_push.py:/app/collectors/shanghai_tender_push.py:ro
+    healthcheck:
+      # 必须用免认证端点，否则 401 会让容器永远 starting
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

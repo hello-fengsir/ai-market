@@ -1,0 +1,33 @@
+# 注意：.gitignore 不支持行内注释，注释必须单独成行，
+# 否则 "#" 之后的内容会被当作规则的一部分，导致规则静默失效。
+
+# ===== 敏感配置：绝不入库 =====
+# 这些文件含真实凭据，推到远端等于公开泄露
+data/secrets.json
+data/auth.json
+data/channels.json
+
+# ===== 业务数据 / 样例标讯：仓库只保留 *.example.json 空模板 =====
+# 这两个文件含具体任务规则、采购人名单、公告标题与联系方式
+data/tasks.json
+data/tenders_fixture.json
+
+# ===== 运行时数据（程序自动生成）=====
+data/state/
+data/outbox/
+data/settings.json
+
+# ===== 构建与打包产物 =====
+dist/
+*.tar.gz
+*.pyc
+__pycache__/
+.venv/
+
+# ===== 本机部署脚手架（含服务器地址等环境信息）=====
+_*.py
+_compose_correct.yml
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db

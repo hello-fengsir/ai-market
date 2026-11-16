@@ -1,0 +1,5 @@
+{
+  "_说明": "password_sha256 = sha256(密码明文)。生成方式：python3 -c \"import hashlib;print(hashlib.sha256('你的密码'.encode()).hexdigest())\"",
+  "username": "admin",
+  "password_sha256": "REPLACE_WITH_SHA256_OF_YOUR_PASSWORD"
+}

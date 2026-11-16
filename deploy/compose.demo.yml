@@ -1,0 +1,45 @@
+# 并入现有 compose 栈的示例服务段。
+# 原则：只新增本服务，不改动其他服务的定义与 healthcheck。
+# 目标主机、项目路径请按你的实际环境替换，仓库内不预置任何内网信息。
+services:
+  ai-market-demo:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.demo
+    image: ai-market-demo:1.0
+    container_name: ai-market-demo
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: Asia/Shanghai
+      # 每天 08:30 强制从一手官网更新，09:00 后各任务按自身计划推送。
+      AUTO_UPDATE: "1"
+      UPDATE_SCHEDULE: "30 8 * * *"
+      LIVE_MODULE_PATH: "/app/collectors/shanghai_tender_push.py"
+      # 可选大模型接口预留；每日采集不依赖大模型，默认关闭。
+      LLM_ENABLED: "0"
+      LLM_BASE_URL: ""
+      LLM_API_KEY: ""
+      LLM_MODEL: ""
+    volumes:
+      # 全部可变内容都在这里；首次部署需先把 data/ 下的 example 模板复制成实际配置（见 README 步骤 0）
+      - ./demo-data:/app/data
+      # 真实采集脚本只读挂载；由每日更新调度器调用，不负责直接推送。
+      - /opt/collectors/shanghai_tender_push.py:/app/collectors/shanghai_tender_push.py:ro
+    healthcheck:
+      # 必须用免认证的 /api/health；用 /api/config 会 401 导致容器永远 health: starting
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# ===== 在目标服务器的项目目录执行 =====
+# 0) 初始化数据目录（首跑一次）：
+#      mkdir -p demo-data && cp -r data/* demo-data/ && chmod -R 755 demo-data
+# 1) 把本目录整体放到目标项目根目录下（例如 <PROJECT_DIR>/ai-market-demo/）；
+# 2) 把上面的 ai-market-demo 服务段合并进现有 compose.yml（只加不改其他服务定义）；
+# 3) 配置 data/ 下的实际 webhook、加签密钥与登录密码（见 README 第 5 节）；
+# 4) docker compose up -d --build ai-market-demo；随后访问 http://<HOST_IP>:8080/；
+# 5) 部署后跑一遍现有栈的健康检查，确认新增服务没有影响其他断言。

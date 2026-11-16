@@ -1,0 +1,30 @@
+[
+  {
+    "id": "wh-sales",
+    "name": "销售群（钉钉）",
+    "channel": "dingtalk",
+    "webhook": "https://oapi.dingtalk.com/robot/send?access_token=REPLACE_DINGTALK_TOKEN",
+    "secret_ref": "sec:dingtalk_sales"
+  },
+  {
+    "id": "wh-presale",
+    "name": "售前群（企业微信）",
+    "channel": "wecom",
+    "webhook": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=REPLACE_WECOM_KEY",
+    "secret_ref": "sec:wecom_presale"
+  },
+  {
+    "id": "wh-feishu",
+    "name": "飞书群",
+    "channel": "feishu",
+    "webhook": "https://open.feishu.cn/open-apis/bot/v2/hook/REPLACE_FEISHU_TOKEN",
+    "secret_ref": null
+  },
+  {
+    "id": "wh-custom",
+    "name": "自定义测试接口",
+    "channel": "custom",
+    "webhook": "https://example.invalid/webhook/test",
+    "secret_ref": null
+  }
+]
